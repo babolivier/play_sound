@@ -43,6 +43,8 @@ func main() {
 		panic(err)
 	}
 
+	defer ctx.Close()
+
 	otoPlayer = ctx.NewPlayer()
 
 	http.HandleFunc("/play", handleReq)
