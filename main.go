@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"flag"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -18,6 +17,7 @@ var (
 
 	otoPlayer   *oto.Player
 	fileContent []byte
+	playing     bool
 )
 
 func main() {
@@ -38,7 +38,7 @@ func main() {
 		channelNum = 1
 	}
 
-	ctx, err := oto.NewContext(*sampleRate, channelNum, 2, len(fileContent))
+	ctx, err := oto.NewContext(*sampleRate, channelNum, 2, 1)
 	if err != nil {
 		panic(err)
 	}
@@ -55,12 +55,16 @@ func main() {
 }
 
 func handleReq(w http.ResponseWriter, req *http.Request) {
-	n, err := otoPlayer.Write(fileContent)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Printf("Loaded %d bytes into the playback buffer\n", n)
-
 	w.WriteHeader(200)
+
+	if !playing {
+		playing = true
+		for _, b := range fileContent {
+			n, err := otoPlayer.Write([]byte{b})
+			if err != nil || n != 1 {
+				panic(err)
+			}
+		}
+		playing = false
+	}
 }
